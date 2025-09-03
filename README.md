@@ -1,183 +1,244 @@
-# Atendechat
+### Convert Chat 🤖
 
-O Atendechat é uma empresa distribuidora de White Label que possui uma solução de atendimentos via Whatsapp que aumenta a produtividade e organização das equipes
+Plataforma de atendimento via WhatsApp construída a partir de um código-base consolidado, com organização em backend (Express) e frontend (React).
 
-## 🚀 Começando
+Este repositório usa o fluxo: dev (teste) → Pull Request → main (produção).
+Produção nunca é editada manualmente — apenas recebe o que está no main.
 
-O repositório do Atendechat possui 3 pastas importantes:
-- backend
-- frontend
-- instalador
+🚀 Começando
 
-O backend é feito em Express e possui toda a estrutura organizada dentro dessa pasta para que seja aplicado no ambiente do cliente. A pasta de frontend contém todo o framework do React.js que gerencia toda a interação com o usuário do sistema.
+Estrutura principal:
 
-A pasta de instalador dentro dessa repositório é uma cópia do instalador usado para que os clientes de sistemas possam fazer o clone dentro da pasta home de seus servidores e seguirem com a instalação automática de todas as dependências do projeto
+backend/ — API em Express, integra DB/Redis, filas, jobs etc.
 
-Link para o repositório do instalador atualizado:
-- [Instalador](https://github.com/atendechat-org/instalador)
+frontend/ — app React (interface do operador/gestor).
 
-Consulte **[Implantação](#-implanta%C3%A7%C3%A3o)** para saber como implantar o projeto.
+scripts/ (opcional) — utilitários de instalação/deploy/backup.
 
-### 📋 Pré-requisitos
+Consulte Implantação em produção
+ para publicar com segurança.
 
-```
-- Node.js v20.x
-- Postgres (release)
-- Npm ( latest )
-- Docker (bionic stable)
-- Redis
-```
+📋 Pré-requisitos
 
-### 🔧 Instalação
+Node.js LTS (18.x ou 20.x)
 
-Para iniciar a instalação do projeto é necessário ter todas as ferramentas de pré-requisitos disponíveis para uso
+npm (ou yarn/pnpm, se padronizar)
 
-#### Redis
-```
-- su - root
-- docker run --name redis-${instancia_add} -p ${redis_port}:6379 --restart always --detach redis redis-server --requirepass ${root_password}
-```
+PostgreSQL 13+
 
-#### Postgres
-```
-- sudo su - postgres
-- createdb ${instancia_add};
-- psql
-- CREATE USER ${instancia_add} SUPERUSER INHERIT CREATEDB CREATEROLE;
-- ALTER USER ${instancia_add} PASSWORD '${root_password}';
-```
+Redis 6+
 
-#### .env backend
-```
-NODE_ENV=
-BACKEND_URL=${backend_url}
-FRONTEND_URL=${frontend_url}
+(Opcional) Docker / docker compose
+
+(Opcional) PM2 para orquestrar em produção
+
+🔧 Instalação dos serviços
+Redis (via Docker)
+# como root (ou com sudo)
+docker run --name redis-app \
+  -p 6379:6379 \
+  --restart always -d \
+  -e REDIS_ARGS="--requirepass ${REDIS_PASSWORD}" \
+  redis:7 \
+  redis-server --requirepass ${REDIS_PASSWORD}
+
+Postgres
+# criar DB e usuário (ajuste os nomes/senhas)
+sudo -u postgres createdb ${APP_DB_NAME}
+sudo -u postgres psql <<SQL
+CREATE USER ${APP_DB_USER} WITH ENCRYPTED PASSWORD '${APP_DB_PASS}';
+GRANT ALL PRIVILEGES ON DATABASE ${APP_DB_NAME} TO ${APP_DB_USER};
+ALTER USER ${APP_DB_USER} CREATEDB;
+SQL
+
+🔐 Variáveis de ambiente
+
+Nunca versione o .env. Suba um .env.example (sem segredos).
+
+.env do backend (exemplo)
+NODE_ENV=development
+PORT=3001
 PROXY_PORT=443
-PORT=${backend_port}
 
+# URLs públicas do seu ambiente
+BACKEND_URL=https://api.seu-dominio.com
+FRONTEND_URL=https://app.seu-dominio.com
+
+# Postgres
 DB_DIALECT=postgres
-DB_HOST=localhost
+DB_HOST=127.0.0.1
 DB_PORT=5432
-DB_USER=${instancia_add}
-DB_PASS=${mysql_root_password}
-DB_NAME=${instancia_add}
+DB_USER=${APP_DB_USER}
+DB_PASS=${APP_DB_PASS}
+DB_NAME=${APP_DB_NAME}
 
-JWT_SECRET=${jwt_secret}
-JWT_REFRESH_SECRET=${jwt_refresh_secret}
+# Auth
+JWT_SECRET=troque-esta-chave
+JWT_REFRESH_SECRET=troque-esta-chave-2
 
-REDIS_URI=redis://:${mysql_root_password}@127.0.0.1:${redis_port}
+# Redis
+REDIS_URI=redis://:${REDIS_PASSWORD}@127.0.0.1:6379
 REDIS_OPT_LIMITER_MAX=1
-REGIS_OPT_LIMITER_DURATION=3000
+REDIS_OPT_LIMITER_DURATION=3000
 
-USER_LIMIT=${max_user}
-CONNECTIONS_LIMIT=${max_whats}
+# Limites
+USER_LIMIT=50
+CONNECTIONS_LIMIT=5
 CLOSED_SEND_BY_ME=true
 
+# Pagamentos (exemplo, opcional)
 GERENCIANET_SANDBOX=false
-GERENCIANET_CLIENT_ID=Client_Id_Gerencianet
-GERENCIANET_CLIENT_SECRET=Client_Secret_Gerencianet
-GERENCIANET_PIX_CERT=certificado-Gerencianet
-GERENCIANET_PIX_KEY=chave pix gerencianet
+GERENCIANET_CLIENT_ID=
+GERENCIANET_CLIENT_SECRET=
+GERENCIANET_PIX_CERT=
+GERENCIANET_PIX_KEY=
 
-# EMAIL
- MAIL_HOST="smtp.gmail.com"
- MAIL_USER="seu@gmail.com"
- MAIL_PASS="SuaSenha"
- MAIL_FROM="seu@gmail.com"
- MAIL_PORT="465"
+# E-mail (exemplo)
+MAIL_HOST=smtp.gmail.com
+MAIL_USER=seu@gmail.com
+MAIL_PASS=SuaSenha
+MAIL_FROM=seu@gmail.com
+MAIL_PORT=465
 
-```
+.env do frontend
+REACT_APP_BACKEND_URL=https://api.seu-dominio.com
+REACT_APP_HOURS_CLOSE_TICKETS_AUTO=24
 
-#### .env frontend
-```
-REACT_APP_BACKEND_URL=${backend_url}
-REACT_APP_HOURS_CLOSE_TICKETS_AUTO = 24
-```
 
-#### Instalando dependências
-```
-cd backend/
+Observação: no README antigo havia DB_PASS=${mysql_root_password} e REDIS_URI usando a mesma senha. Aqui padronizamos para APP_DB_PASS (Postgres) e REDIS_PASSWORD (Redis).
+
+🧩 Dependências
+# backend
+cd backend
 npm install --force
-cd frontend/
-npm install --force
-```
 
-### Rodando localmente
-```
-cd backend/
-npm run watch
+# frontend
+cd ../frontend
+npm install --force
+
+🧪 Rodando localmente (desenvolvimento)
+# backend (watch/build podem variar conforme seu package.json)
+cd backend
+npm run watch   # ou npm run dev
+npm start       # se necessário
+
+# frontend
+cd ../frontend
 npm start
 
-cd frontend/
-npm start
-```
+⚙️ Testes
 
-## ⚙️ Executando os testes
+(adicione aqui seus comandos de teste quando disponíveis, ex.: npm test, vitest, jest etc.)
 
-//
+📦 Implantação em produção
 
-### 🔩 Analise os testes de ponta a ponta
+Produção puxa o main. Nunca edite “na mão”.
+Acesse como usuário de deploy.
 
-//
-
-## 📦 Implantação em produção
-
-Para correta implantação é necessário realizar uma atualização do código fonte da aplicação e criar novamente os arquivos da pasta dist/
-
-Atenção: é necessário acessar utilizando o usuário de deploy
-
-```
 su - deploy
-```
 
-```
-cd /home/deploy/${empresa_atualizar}
-pm2 stop ${empresa_atualizar}-frontend
-git pull
-cd /home/deploy/${empresa_atualizar}/frontend
-npm install
+Frontend
+cd /home/deploy/${APP_NAME}
+pm2 stop ${APP_NAME}-frontend || true
+git fetch origin --prune
+git checkout main
+git reset --hard origin/main
+
+cd frontend
+npm ci || npm install
 rm -rf build
 npm run build
-pm2 start ${empresa_atualizar}-frontend
+
+pm2 start "npx serve -s build -l 3000" --name ${APP_NAME}-frontend || pm2 restart ${APP_NAME}-frontend
 pm2 save
-```
 
-```
-cd /home/deploy/${empresa_atualizar}
-pm2 stop ${empresa_atualizar}-backend
-git pull
-cd /home/deploy/${empresa_atualizar}/backend
-npm install
-npm update -f
-npm install @types/fs-extra
-rm -rf dist 
+
+Se você usa Nginx como reverse proxy, aponte para a porta do frontend (ex.: 3000) ou sirva arquivos estáticos via Nginx apontando para frontend/build.
+
+Backend
+cd /home/deploy/${APP_NAME}
+pm2 stop ${APP_NAME}-backend || true
+git fetch origin --prune
+git checkout main
+git reset --hard origin/main
+
+cd backend
+npm ci || npm install
+npm update -f || true
+# instale tipos extras se o projeto exigir:
+# npm install -D @types/fs-extra
+
+rm -rf dist
 npm run build
+
+# Migrations/Seeds (Sequelize)
 npx sequelize db:migrate
-npx sequelize db:migrate
-npx sequelize db:seed
-pm2 start ${empresa_atualizar}-backend
-pm2 save 
-```
+npx sequelize db:seed    # rode apenas se realmente precisar popular
 
-## 🛠️ Construído com
+pm2 start "node dist/server.js" --name ${APP_NAME}-backend || pm2 restart ${APP_NAME}-backend
+pm2 save
 
 
-* [Express](https://expressjs.com/pt-br/) - O framework backend usado
-* [React](https://react.dev/) - Framework frontend usado
-* [NPM](https://www.npmjs.com/) - Gerenciador de dependências
+Ajuste o entrypoint conforme seu projeto (ex.: dist/server.js, dist/index.js).
 
-## 🖇️ Colaborando
+🌿 Fluxo de Git (recomendado)
 
-//
+dev → desenvolvimento (VPS de testes)
 
-## 📌 Versão
+main → produção (branch protegido; exige PR)
 
-Versão 1.0.0
+Rotina:
 
-## 📄 Licença
+Trabalhe na VPS de testes (branch dev), git add/commit/push.
 
-Este projeto está sob a licença
+Abra PR dev → main no GitHub e faça o merge.
 
-⌨️ com ❤️ por [Atendechat](https://atendechat.com) 😊
+Na produção, sincronize:
 
-Todos os direitos reservados a https://atendechat.com
+cd /home/deploy/${APP_NAME}
+git fetch origin --prune
+git checkout main
+git reset --hard origin/main
+# reinicie PM2 conforme acima
+
+
+(Opcional) Configure GitHub Actions por SSH para publicar automaticamente ao fazer merge no main.
+
+🛠️ Construído com
+
+Express
+ — backend
+
+React
+ — frontend
+
+NPM
+ — pacotes/gerenciador
+
+(Opcional) PM2
+ — processos em produção
+
+📌 Versão
+
+1.0.0 (baseline inicial deste repositório)
+
+📄 Licença & Créditos
+
+Se o código-base original possui licença, mantenha os termos e credite a origem.
+Atualize esta seção com a licença adotada por este repositório (ex.: MIT) e links necessários.
+
+🤝 Contribuindo
+
+Abra uma issue descrevendo a mudança.
+
+Crie um branch a partir de dev (ex.: feat/nome-da-feature).
+
+Abra PR para dev. Após revisão, integramos em main.
+
+Observações importantes
+
+Padronize nomes das variáveis para evitar confusão (DB x Redis).
+
+Evite rodar seed em produção sem necessidade.
+
+Garanta que .env de produção e teste estão corretos e fora do Git.
