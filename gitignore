@@ -1,0 +1,70 @@
+# ===============================
+# Node.js / JS
+# ===============================
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Só manter 1 lockfile, ignorar yarn.lock se usar npm
+frontend/yarn.lock
+
+# ===============================
+# Ambiente / Segredos
+# ===============================
+.env
+.env.*
+!.env.example
+
+# ===============================
+# Build e cache
+# ===============================
+dist/
+build/
+out/
+.next/
+.cache/
+coverage/
+
+# ===============================
+# Logs
+# ===============================
+*.log
+logs/
+*.pid
+
+# ===============================
+# Sistema / IDE
+# ===============================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ===============================
+# Docker
+# ===============================
+docker-data/
+.dockerignore
+
+# ===============================
+# Backups / arquivos locais
+# ===============================
+*.old
+*.bak
+*.swp
+*.tmp
+
+# ===============================
+# Certificados e chaves
+# ===============================
+certificates/
+*.pem
+*.crt
+*.key
+
+# ===============================
+# Outros específicos do projeto
+# ===============================
+instances.json
+brands/

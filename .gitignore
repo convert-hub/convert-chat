@@ -1,0 +1,19 @@
+node_modules/
+.env
+.env.*
+dist/
+build/
+.tmp/
+.cache/
+coverage/
+*.log
+npm-debug.log*
+yarn-error.log*
+pnpm-lock.yaml
+# front/back (ajuste se tiver)
+frontend/node_modules/
+backend/node_modules/
+# artefatos de container
+*.old
+Dockerfile.local
+docker-data/
