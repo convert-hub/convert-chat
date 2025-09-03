@@ -32,10 +32,11 @@ export const RefreshTokenService = async (
 
     const user = await ShowUserService(id);
 
-    if (user.tokenVersion !== tokenVersion) {
-      res.clearCookie("jrt");
-      throw new AppError("ERR_SESSION_EXPIRED", 401);
-    }
+    // Allow multiple concurrent sessions by not invalidating tokens based on tokenVersion
+    // if (user.tokenVersion !== tokenVersion) {
+    //   res.clearCookie("jrt");
+    //   throw new AppError("ERR_SESSION_EXPIRED", 401);
+    // }
 
     const newToken = createAccessToken(user);
     const refreshToken = createRefreshToken(user);

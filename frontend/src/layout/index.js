@@ -272,15 +272,16 @@ const LoggedInLayout = ({ children, themeToggle }) => {
 
     const socket = socketManager.getSocket(companyId);
 
-    socket.on(`company-${companyId}-auth`, (data) => {
-      if (data.user.id === +userId) {
-        toastError("Sua conta foi acessada em outro computador.");
-        setTimeout(() => {
-          localStorage.clear();
-          window.location.reload();
-        }, 1000);
-      }
-    });
+    // Allow multiple concurrent sessions - commenting out auto-logout
+    // socket.on(`company-${companyId}-auth`, (data) => {
+    //   if (data.user.id === +userId) {
+    //     toastError("Sua conta foi acessada em outro computador.");
+    //     setTimeout(() => {
+    //       localStorage.clear();
+    //       window.location.reload();
+    //     }, 1000);
+    //   }
+    // });
 
     socket.emit("userStatus");
     const interval = setInterval(() => {

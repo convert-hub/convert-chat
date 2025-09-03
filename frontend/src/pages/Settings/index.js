@@ -68,7 +68,7 @@ const Settings = () => {
     });
 
     return () => {
-      socket.disconnect();
+      socket.off(`company-${companyId}-settings`);
     };
   }, [socketManager]);
 
